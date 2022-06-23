@@ -11,8 +11,9 @@ filename = "hdd/noise1024.bin"
 record_filename = "hdd/bw_record.csv"
 
 def prediction_noise_wave(samples, hi_freq_ratio, interval):
-    Nsamples = len(samples)
-    amp = fft.fft(samples)/Nsamples
+    df = pd.read_csv(record_filename)
+    sample_size = len(df)
+    amp = fft.fft(samples)/sample_size
     amp_complex_h = amp
     amp_h = np.absolute(amp_complex_h)
 
@@ -46,9 +47,20 @@ def prediction_noise_wave(samples, hi_freq_ratio, interval):
     return dc, selected_amp, selected_freq, selected_phase   
 
 def bw_write(start, bw):
-    df = pd.read_csv(record_filename)
-    
-    df.to_csv(record_filename)
+    start_int = round(start)
+
+    # Pandas method
+    # df = pd.read_csv(record_filename)
+    # size = len(df)
+    # df.loc[size] = {'origin': app_tag, 'time': start_int, 'bw': bw}
+    # df.to_csv(record_filename, index=False)
+
+    # File I/O method
+    f = open(record_filename, 'a+')
+    content = app_tag + ',' + str(start_int) + ',' + str(bw) + '\n'
+    f.write(content)
+    f.close()
+
 
 def work(size, interval):
     bandwidth = []
@@ -77,16 +89,18 @@ def work(size, interval):
         time.sleep(interval - ana_time)
 
 def main():
-    read_size = int(sys.argv[1])
-    interval = int(sys.argv[2])
-    if sys.argv[3] == 'now':
-        work(read_size, interval)
-    else:
-        while True:
-            now_time = datetime.datetime.now(timezone('EST'))
-            if now_time.hour == int(sys.argv[3]) and now_time.minute == int(sys.argv[4]) and now_time.second == int(sys.argv[5]):
-                work(read_size, interval)
-                break
+    # read_size = int(sys.argv[1])
+    # interval = int(sys.argv[2])
+    # if sys.argv[3] == 'now':
+    #     work(read_size, interval)
+    # else:
+    #     while True:
+    #         now_time = datetime.datetime.now(timezone('EST'))
+    #         if now_time.hour == int(sys.argv[3]) and now_time.minute == int(sys.argv[4]) and now_time.second == int(sys.argv[5]):
+    #             work(read_size, interval)
+    #             break
+
+    bw_write(time.time(), 110)
 
 if __name__ == "__main__":
     main()
