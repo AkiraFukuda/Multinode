@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-import datetime
+from datetime import datetime
 from pytz import timezone
 import numpy as np
 import pandas as pd
@@ -104,7 +104,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
         random_factor = np.random.poisson(lam=100)
         augmentation *= random_factor / 100
 
-        print("Start reading, Augmentation = %.2f" % augmentation)
+        print("Start reading, Augmentation = %.1%" % augmentation)
         start = time.time()
         f = open(filename, "rb")
         f.read(int(size*1024*1024*augmentation))
@@ -115,7 +115,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
         
         end_ana = time.time()
         ana_time = end_ana - start
-        print("Analysis time = ", ana_time)
+        print("Analysis time = %.2f s" % ana_time)
         if ana_time > interval:
             print("Analysis time is larger than the interval!")
             
@@ -127,16 +127,15 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
 
 def work():
     # fully_read(read_size, interval)
-    # noise_prediction()
-    fake_result = [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]
-    partial_read(read_size, interval, 100, 200, fake_result)
+    bw_predicted = noise_prediction()
+    # partial_read(read_size, interval, 100, 200, bw_predicted)
 
 def main():
     if sys.argv[1] == 'now':
         work()
     else:
         while True:
-            now_time = datetime.datetime.now(timezone('EST'))
+            now_time = datetime.now(timezone('EST'))
             if now_time.hour == int(sys.argv[1]) and now_time.minute == int(sys.argv[2]) and now_time.second == int(sys.argv[3]):
                 work()
                 break
