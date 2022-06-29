@@ -119,7 +119,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
         random_factor = np.random.poisson(lam=100)
         augmentation *= random_factor / 100
 
-        print("Start reading, Augmentation = %.1%" % augmentation)
+        print("Start reading, Augmentation = {:.1%}".format(augmentation))
         start = time.time()
         f = open(filename, "rb")
         f.read(int(size*1024*1024*augmentation))
