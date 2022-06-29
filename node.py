@@ -98,7 +98,7 @@ def fully_read(size, interval):
             
         bw = size / io_time
         bandwidth.append(bw)
-        bw_write(start, bw)
+        # bw_write(start, bw)
         print("Perceived bandwidth = %.2f MB/s" % bw)
         time.sleep(interval - ana_time)
     
