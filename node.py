@@ -5,7 +5,7 @@ import datetime
 from pytz import timezone
 import numpy as np
 import pandas as pd
-import scipy.fftpack as fft
+import scipy.fft as fft
 
 app_tag = "App1"
 read_size = 1024
@@ -85,19 +85,29 @@ def fully_read(size, interval):
         bw = size / io_time
         bandwidth.append(bw)
         bw_write(start, bw)
-        print("Perceived bandwidth = %f MB/s" % bw)
+        print("Perceived bandwidth = %.2f MB/s" % bw)
         time.sleep(interval - ana_time)
 
 
-def partial_read(size, interval, predict_result):
+def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
     bandwidth = []
     for i in range(read_times):
         print("%s s"%(i*interval))
 
-        print("Start reading")
+        bw_predicted = predict_result[i]
+        if bw_predicted < bw_low_bound:
+            augmentation = 0.0
+        elif bw_predicted > bw_high_bound:
+            augmentation = 1.0
+        else:
+            augmentation = (bw_predicted - bw_low_bound) / (bw_high_bound - bw_low_bound)
+        random_factor = np.random.poisson(lam=100)
+        augmentation *= random_factor / 100
+
+        print("Start reading, Augmentation = %.2f" % augmentation)
         start = time.time()
         f = open(filename, "rb")
-        
+        f.read(size * augmentation)
         f.close()
         end_io = time.time()
         print("End reading")
@@ -112,12 +122,14 @@ def partial_read(size, interval, predict_result):
         bw = size / io_time
         bandwidth.append(bw)
         bw_write(start, bw)
-        print("Perceived bandwidth = %f MB/s" % bw)
+        print("Perceived bandwidth = %.2f MB/s" % bw)
         time.sleep(interval - ana_time)
 
 def work():
     # fully_read(read_size, interval)
-    noise_prediction()
+    # noise_prediction()
+    fake_result = [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]
+    partial_read(read_size, interval, 100, 200, fake_result)
 
 def main():
     if sys.argv[1] == 'now':
