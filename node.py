@@ -143,6 +143,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
 def work():
     bw_record = fully_read(read_size, interval)
     bw_predicted = noise_prediction_temp(bw_record)
+    print(bw_predicted)
     partial_read(read_size, interval, 100, 200, bw_predicted)
 
 def main():
