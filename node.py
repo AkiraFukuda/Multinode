@@ -107,7 +107,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
         print("Start reading, Augmentation = %.2f" % augmentation)
         start = time.time()
         f = open(filename, "rb")
-        f.read(size * augmentation)
+        f.read(int(size*1024*1024*augmentation))
         f.close()
         end_io = time.time()
         print("End reading")
@@ -121,7 +121,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
             
         bw = size / io_time
         bandwidth.append(bw)
-        bw_write(start, bw)
+        # bw_write(start, bw)
         print("Perceived bandwidth = %.2f MB/s" % bw)
         time.sleep(interval - ana_time)
 
