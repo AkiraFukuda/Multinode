@@ -30,7 +30,7 @@ def noise_prediction_temp(samples):
 
     amp = np.abs(yf)
     yf_selected = []
-    for i in range(list(yf)):
+    for i in range(len(yf)):
         if amp[i] > 1e-10:
             yf_selected.append(yf[i])
 
