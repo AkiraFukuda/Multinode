@@ -1,2 +1,2 @@
 #!/bin/bash
-dd if=/dev/urandom of="noise1024.bin" bs=1M count=1024
+dd if=/dev/urandom of="/mnt/hdd/noise2_512.bin" bs=1M count=512
