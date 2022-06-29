@@ -92,7 +92,7 @@ def fully_read(size, interval):
 
         end_ana = time.time()
         ana_time = end_ana - start
-        print("Analysis time = ", ana_time)
+        print("Analysis time = %.2f s" % ana_time)
         if ana_time > interval:
             print("Analysis time is larger than the interval!")
             
