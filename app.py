@@ -10,7 +10,7 @@ import scipy.fft as fft
 app_tag = "App1"
 read_size = 1024
 interval = 15
-read_times = 10
+read_times = 20
 filename = "hdd/noise1_1024.bin"
 
 record_fn0 = "hdd/bw_record_0.csv"
@@ -98,7 +98,7 @@ def fully_read(size, interval):
             
         bw = size / io_time
         bandwidth.append(bw)
-        # bw_write(start, bw)
+        bw_write(start, bw)
         print("Perceived bandwidth = %.2f MB/s" % bw)
         time.sleep(interval - ana_time)
     
@@ -111,18 +111,20 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
 
         bw_predicted = predict_result[i]
         if bw_predicted < bw_low_bound:
-            augmentation = 0.0
+            augment_ratio = 0.0
         elif bw_predicted > bw_high_bound:
-            augmentation = 1.0
+            aug_ratio = 1.0
         else:
-            augmentation = (bw_predicted - bw_low_bound) / (bw_high_bound - bw_low_bound)
-        random_factor = np.random.poisson(lam=100)
-        augmentation *= random_factor / 100
+            aug_ratio = (bw_predicted - bw_low_bound) / (bw_high_bound - bw_low_bound)
+            random_factor = np.random.poisson(lam=100)
+            while (aug_ratio * random_factor/100 > 1): # Augmentation exceeds 100%
+                random_factor = np.random.poisson(lam=100)
+            aug_ratio *= random_factor/100
 
-        print("Start reading, Augmentation = {:.1%}".format(augmentation))
+        print("Start reading, Augmentation = {:.0%}".format(aug_ratio))
         start = time.time()
         f = open(filename, "rb")
-        f.read(int(size*1024*1024*augmentation))
+        f.read(int(size*1024*1024*aug_ratio))
         f.close()
         end_io = time.time()
         print("End reading")
@@ -134,9 +136,9 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
         if ana_time > interval:
             print("Analysis time is larger than the interval!")
             
-        bw = size / io_time
+        bw = size*aug_ratio / io_time
         bandwidth.append(bw)
-        # bw_write(start, bw)
+        bw_write(start, bw)
         print("Perceived bandwidth = %.2f MB/s" % bw)
         time.sleep(interval - ana_time)
 
