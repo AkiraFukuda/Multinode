@@ -153,7 +153,7 @@ def main():
         work()
     else:
         while True:
-            now_time = datetime.now(timezone('EST'))
+            now_time = datetime.now(timezone('UTC'))
             if now_time.hour == int(sys.argv[1]) and now_time.minute == int(sys.argv[2]) and now_time.second == int(sys.argv[3]):
                 work()
                 break
