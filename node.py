@@ -8,12 +8,14 @@ import scipy.fftpack as fft
 
 app_tag = "App1"
 filename = "hdd/noise1024.bin"
-record_filename = "hdd/bw_record.csv"
+
+record_fn0 = "hdd/bw_record_0.csv"
+record_fn1 = "hdd/bw_record_1.csv"
 
 def prediction_noise_wave(samples, hi_freq_ratio, interval):
-    df = pd.read_csv(record_filename)
+    df = pd.read_csv(record_fn0)
     sample_size = len(df)
-    
+
     amp = fft.fft(samples)/sample_size
     amp_complex_h = amp
     amp_h = np.absolute(amp_complex_h)
@@ -48,6 +50,7 @@ def prediction_noise_wave(samples, hi_freq_ratio, interval):
     return dc, selected_amp, selected_freq, selected_phase   
 
 def bw_write(start, bw):
+
     start_int = round(start)
 
     # Pandas method
@@ -56,11 +59,25 @@ def bw_write(start, bw):
     # df.loc[size] = {'origin': app_tag, 'time': start_int, 'bw': bw}
     # df.to_csv(record_filename, index=False)
 
+    # Sliding window via file 0 and file 1
+    f0 = open(record_fn0, 'r')
+    f0_firstline = f0.readline()
+    print(f0_firstline)
+
+    return
+    
+
     # File I/O method
-    f = open(record_filename, 'a+')
+    f = open(record_fn0, 'a+')
     content = app_tag + ',' + str(start_int) + ',' + str(bw) + '\n'
     f.write(content)
     f.close()
+
+
+def partial_read(size, interval, predict_result):
+    bandwidth = []
+    for i in range(20):
+        print
 
 
 def work(size, interval):
@@ -91,16 +108,18 @@ def work(size, interval):
 
 
 def main():
-    read_size = int(sys.argv[1])
-    interval = int(sys.argv[2])
-    if sys.argv[3] == 'now':
-        work(read_size, interval)
-    else:
-        while True:
-            now_time = datetime.datetime.now(timezone('EST'))
-            if now_time.hour == int(sys.argv[3]) and now_time.minute == int(sys.argv[4]) and now_time.second == int(sys.argv[5]):
-                work(read_size, interval)
-                break
+    # read_size = int(sys.argv[1])
+    # interval = int(sys.argv[2])
+    # if sys.argv[3] == 'now':
+    #     work(read_size, interval)
+    # else:
+    #     while True:
+    #         now_time = datetime.datetime.now(timezone('EST'))
+    #         if now_time.hour == int(sys.argv[3]) and now_time.minute == int(sys.argv[4]) and now_time.second == int(sys.argv[5]):
+    #             work(read_size, interval)
+    #             break
+
+    bw_write(100, 110)
 
 
 if __name__ == "__main__":
