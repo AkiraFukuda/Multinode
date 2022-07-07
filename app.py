@@ -13,7 +13,7 @@ exp_time = 540
 window_length = 3600
 amp_low_ratio = 0.25
 freq_high_ratio = 1
-bw_low_bound = 150
+bw_low_bound = 100
 bw_high_bound = 200
 
 filename = "hdd/app1_1024.bin"
