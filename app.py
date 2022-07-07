@@ -103,7 +103,7 @@ def fully_read(size, interval):
         bw = size / io_time
         bandwidth.append(bw)
         bw_write(start, bw, window_length)
-        print("Time = %.2f s, Bandwidth = %.2f MB/s" % ana_time, bw)
+        print("Time = %.2f s, Bandwidth = %.2f MB/s" % (ana_time, bw))
         if ana_time > interval:
             print("Analysis time is larger than the interval!")
         time.sleep(interval - ana_time)
@@ -151,7 +151,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
         aug_record.append(aug_ratio)
         last_performance = bw / bw_predicted
         bw_write(start, bw, window_length)
-        print("Time = %.2f s, Bandwidth = %.2f MB/s" % ana_time, bw)
+        print("Time = %.2f s, Bandwidth = %.2f MB/s" % (ana_time, bw))
         if ana_time > interval:
             print("Analysis time is larger than the interval!")
         time.sleep(interval - ana_time)
@@ -166,7 +166,7 @@ def make_plot(interval, bw1, bw_pred, bw_new, aug, col):
         time2.append((i+int(exp_time/interval))*interval)
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
-    ax2.bar(time2, aug, width=4, color='#cccccc')
+    ax2.bar(time2, aug, width=4, color='#bbbbbb')
     ax1.scatter(time1, bw1, color='red')
     ax1.plot(time1, bw1, color='red', label='Bandwidth')
     ax1.scatter(time2, bw_new, color='red')
@@ -181,7 +181,7 @@ def make_plot(interval, bw1, bw_pred, bw_new, aug, col):
     ax2.set_ylabel("Augmentation (%)")
     ax1.set_zorder(10)
     ax1.legend()
-    plt.show()
+    plt.savefig('log/app1.png')
 
 def work(read_size, interval):
     bw_record = fully_read(read_size, interval)
