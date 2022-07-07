@@ -6,9 +6,10 @@ from pytz import timezone
 import numpy as np
 import pandas as pd
 import scipy.fft as fft
+import matplotlib.pyplot as plt
 
 app_tag = "App1"
-exp_time = 900
+exp_time = 540
 window_length = 3600
 amp_low_ratio = 0.25
 freq_high_ratio = 1
@@ -90,38 +91,33 @@ def fully_read(size, interval):
     for i in range(int(exp_time/interval)):
         print("%s s"%(i*interval))
 
-        print("Start reading")
         start = time.time()
         f = open(filename, "rb")
         f.read(size*1024*1024)
         f.close()
         end_io = time.time()
-        print("End reading")
         io_time = end_io - start
 
         end_ana = time.time()
         ana_time = end_ana - start
-        print("Analysis time = %.2f s" % ana_time)
-        if ana_time > interval:
-            print("Analysis time is larger than the interval!")
-            
         bw = size / io_time
         bandwidth.append(bw)
         bw_write(start, bw, window_length)
-        print("Perceived bandwidth = %.2f MB/s" % bw)
+        print("Time = %.2f s, Bandwidth = %.2f MB/s" % ana_time, bw)
+        if ana_time > interval:
+            print("Analysis time is larger than the interval!")
         time.sleep(interval - ana_time)
     
-    print("bw:", bandwidth)
     return bandwidth
 
 def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
     bandwidth = []
     aug_record = []
+    col_record = []
     collision_times = 0
     last_performance = 1
     for i in range(int(exp_time/interval)):
-        print("%s s"%(i*interval))
-
+        print("%s s" % (i*interval))
         bw_predicted = predict_result[i]
         if bw_predicted < bw_low_bound:
             aug_ratio = 0.0
@@ -129,44 +125,74 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
             aug_ratio = 1.0
         else:
             aug_ratio = (bw_predicted - bw_low_bound) / (bw_high_bound - bw_low_bound)
-            if last_performance < 0.5:
-                collision_times += 1
-                random_factor = np.random.randint(collision_times)
-                aug_ratio *= np.power(0.5, random_factor)
-            else:
-                collision_times = 0
+        print("Augmentation = {:.0%}".format(aug_ratio))
 
-        print("Start reading, Augmentation = {:.0%}".format(aug_ratio))
+        if last_performance < 0.5:
+            collision_times += 1
+            print("Collision detected!")
+            random_factor = np.power(0.5, np.random.randint(collision_times))
+            aug_ratio *= random_factor
+            col_record.append(random_factor)
+        else:
+            collision_times = 0
+            col_record.append(-1)
+
         start = time.time()
         f = open(filename, "rb")
         f.read(int(size*aug_ratio*1024*1024))
         f.close()
         end_io = time.time()
-        print("End reading")
         io_time = end_io - start
         
         end_ana = time.time()
         ana_time = end_ana - start
-        print("Analysis time = %.2f s" % ana_time)
-        if ana_time > interval:
-            print("Analysis time is larger than the interval!")
-            
         bw = size*aug_ratio / io_time
         bandwidth.append(bw)
         aug_record.append(aug_ratio)
         last_performance = bw / bw_predicted
         bw_write(start, bw, window_length)
-        print("Perceived bandwidth = %.2f MB/s" % bw)
+        print("Time = %.2f s, Bandwidth = %.2f MB/s" % ana_time, bw)
+        if ana_time > interval:
+            print("Analysis time is larger than the interval!")
         time.sleep(interval - ana_time)
     
-    print("bw new:", bandwidth)
-    print("aug ratio:", aug_ratio)
+    return bandwidth, aug_record, col_record
+
+def make_plot(interval, bw1, bw_pred, bw_new, aug, col): 
+    time1 = []
+    time2 = []
+    for i in range(int(exp_time/interval)):
+        time1.append(i*interval)
+        time2.append((i+int(exp_time/interval))*interval)
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    ax2.bar(time2, aug, width=4, color='#cccccc')
+    ax1.scatter(time1, bw1, color='red')
+    ax1.plot(time1, bw1, color='red', label='Bandwidth')
+    ax1.scatter(time2, bw_new, color='red')
+    ax1.plot(time2, bw_new, color='red')
+    ax1.scatter(time2, bw_pred, color='black')
+    ax1.plot(time2, bw_pred, color='black', label='Predict')
+
+    ax1.vlines(exp_time-5, 100, 270, color='black', linestyles='dashed')
+    # ax1.ylim(120, 280)
+    ax1.set_xlabel("Time (second)")
+    ax1.set_ylabel("Bandwidth (MB/s)")
+    ax2.set_ylabel("Augmentation (%)")
+    ax1.set_zorder(10)
+    ax1.legend()
+    plt.show()
 
 def work(read_size, interval):
     bw_record = fully_read(read_size, interval)
+    print("bw:", bw_record)
     bw_predicted = noise_prediction_temp(bw_record, amp_low_ratio, freq_high_ratio)
     print("bw predicted:", bw_predicted)
-    partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
+    bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
+    print("bw new:", bw_new)
+    print("augment:", aug_record)
+    print("collision:", col_record)
+    make_plot(interval, bw_record, bw_predicted, bw_new, aug_record, col_record)
 
 def main():
     read_size = int(sys.argv[1])
