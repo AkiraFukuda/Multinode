@@ -16,6 +16,8 @@ filename = "hdd/noise1_1024.bin"
 record_fn0 = "hdd/bw_record_0.csv"
 record_fn1 = "hdd/bw_record_1.csv"
 window_length = 86400
+amp_low_threshold = 1e-10
+freq_high_ratio = 0.5
 
 def noise_prediction():
     df0 = pd.read_csv(record_fn0, header=None, names=['origin', 'date', 'time', 'bw'])
@@ -23,21 +25,24 @@ def noise_prediction():
     print(df0.to_dict())
     print(df1.to_dict())
 
-def noise_prediction_temp(samples):
+def noise_prediction_temp(samples, amp_low_threshold, freq_high_ratio):
     N = len(samples)
     xf = fft.fftfreq(N, 1/N)
     yf = fft.fft(samples)
-
     amp = np.abs(yf)
-    yf_selected = []
-    for i in range(len(yf)):
-        if amp[i] > 1e-10:
-            yf_selected.append(yf[i])
+    freq_high_threshold = np.max(xf) * freq_high_ratio
 
-    new_sig = fft.ifft(yf_selected)
+    yf_filtered = []
+    for i in range(len(yf)):
+        if amp[i] > amp_low_threshold and np.abs(xf[i]) < freq_high_threshold:
+            yf_filtered.append(yf[i])
+        else:
+            yf_filtered.append(0)
+
+    new_sig = fft.ifft(yf_filtered)
     return list(np.abs(new_sig))
 
-def bw_write(start, bw):
+def bw_write(start, bw, window_length):
 
     now_date = int(round(start) / window_length)
     start_time_int = round(start) % window_length
@@ -98,28 +103,31 @@ def fully_read(size, interval):
             
         bw = size / io_time
         bandwidth.append(bw)
-        bw_write(start, bw)
+        bw_write(start, bw, window_length)
         print("Perceived bandwidth = %.2f MB/s" % bw)
         time.sleep(interval - ana_time)
     
+    print("bw:", bandwidth)
     return bandwidth
 
 def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
     bandwidth = []
+    aug_record = []
+    collision_threshold = 0.5
+    last_performance = 1
     for i in range(read_times):
         print("%s s"%(i*interval))
 
         bw_predicted = predict_result[i]
         if bw_predicted < bw_low_bound:
-            augment_ratio = 0.0
+            aug_ratio = 0.0
         elif bw_predicted > bw_high_bound:
             aug_ratio = 1.0
         else:
             aug_ratio = (bw_predicted - bw_low_bound) / (bw_high_bound - bw_low_bound)
-            random_factor = np.random.poisson(lam=100)
-            while (aug_ratio * random_factor/100 > 1): # Augmentation exceeds 100%
-                random_factor = np.random.poisson(lam=100)
-            aug_ratio *= random_factor/100
+            random_factor = np.random.random()
+            if last_performance < collision_threshold and random_factor < 0.5:
+                aug_ratio /= 2
 
         print("Start reading, Augmentation = {:.0%}".format(aug_ratio))
         start = time.time()
@@ -138,14 +146,19 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
             
         bw = size*aug_ratio / io_time
         bandwidth.append(bw)
-        bw_write(start, bw)
+        aug_record.append(aug_ratio)
+        last_performance = bw / bw_predicted
+        bw_write(start, bw, window_length)
         print("Perceived bandwidth = %.2f MB/s" % bw)
         time.sleep(interval - ana_time)
+    
+    print("bw new:", bandwidth)
+    print("aug ratio:", aug_ratio)
 
 def work():
     bw_record = fully_read(read_size, interval)
-    bw_predicted = noise_prediction_temp(bw_record)
-    print(bw_predicted)
+    bw_predicted = noise_prediction_temp(bw_record, amp_low_threshold, freq_high_ratio)
+    print("bw predicted:", bw_predicted)
     partial_read(read_size, interval, 100, 200, bw_predicted)
 
 def main():
