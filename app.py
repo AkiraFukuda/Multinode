@@ -10,8 +10,8 @@ import scipy.fft as fft
 app_tag = "App1"
 read_size = 512
 interval = 15
-read_times = 20
-filename = "hdd/noise1_1024.bin"
+exp_time = 900
+filename = "hdd/noise1_512.bin"
 
 record_fn0 = "hdd/bw_record_0.csv"
 record_fn1 = "hdd/bw_record_1.csv"
@@ -83,7 +83,7 @@ def bw_write(start, bw, window_length):
 
 def fully_read(size, interval):
     bandwidth = []
-    for i in range(read_times):
+    for i in range(exp_time / interval):
         print("%s s"%(i*interval))
 
         print("Start reading")
@@ -115,7 +115,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
     aug_record = []
     collision_times = 0
     last_performance = 1
-    for i in range(read_times):
+    for i in range(exp_time / interval):
         print("%s s"%(i*interval))
 
         bw_predicted = predict_result[i]
