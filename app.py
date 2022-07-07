@@ -125,7 +125,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
             aug_ratio = 1.0
         else:
             aug_ratio = (bw_predicted - bw_low_bound) / (bw_high_bound - bw_low_bound)
-            random_factor = np.random.random()
+            random_factor = np.random.rand()
             if last_performance < collision_threshold and random_factor < 0.5:
                 aug_ratio /= 2
 
