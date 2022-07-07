@@ -103,7 +103,7 @@ def fully_read(size, interval):
         bw = size / io_time
         bandwidth.append(bw)
         bw_write(start, bw, window_length)
-        print("Time = %.2f s, Bandwidth = %.2f MB/s" % ana_time, bw)
+        print("Time = %.2f s, Bandwidth = %.2f MB/s" % (ana_time, bw))
         if ana_time > interval:
             print("Analysis time is larger than the interval!")
         time.sleep(interval - ana_time)
@@ -151,7 +151,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
         aug_record.append(aug_ratio)
         last_performance = bw / bw_predicted
         bw_write(start, bw, window_length)
-        print("Time = %.2f s, Bandwidth = %.2f MB/s" % ana_time, bw)
+        print("Time = %.2f s, Bandwidth = %.2f MB/s" % (ana_time, bw))
         if ana_time > interval:
             print("Analysis time is larger than the interval!")
         time.sleep(interval - ana_time)
