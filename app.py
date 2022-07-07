@@ -8,16 +8,16 @@ import pandas as pd
 import scipy.fft as fft
 
 app_tag = "App1"
-read_size = 512
-interval = 15
 exp_time = 900
-filename = "hdd/noise1_512.bin"
+window_length = 3600
+amp_low_ratio = 0.25
+freq_high_ratio = 1
+bw_low_bound = 150
+bw_high_bound = 200
 
+filename = "hdd/app1_1024.bin"
 record_fn0 = "hdd/bw_record_0.csv"
 record_fn1 = "hdd/bw_record_1.csv"
-window_length = 3600
-amp_low_threshold = 1e-10
-freq_high_ratio = 0.6
 
 def noise_prediction():
     df0 = pd.read_csv(record_fn0, header=None, names=['origin', 'date', 'time', 'bw'])
@@ -25,11 +25,12 @@ def noise_prediction():
     print(df0.to_dict())
     print(df1.to_dict())
 
-def noise_prediction_temp(samples, amp_low_threshold, freq_high_ratio):
+def noise_prediction_temp(samples, amp_low_ratio, freq_high_ratio):
     N = len(samples)
     xf = fft.fftfreq(N, 1/N)
     yf = fft.fft(samples)
     amp = np.abs(yf)
+    amp_low_threshold = np.max(amp) * amp_low_ratio
     freq_high_threshold = np.max(xf) * freq_high_ratio
 
     yf_filtered = []
@@ -89,7 +90,7 @@ def fully_read(size, interval):
         print("Start reading")
         start = time.time()
         f = open(filename, "rb")
-        f.read()
+        f.read(size*1024*1024)
         f.close()
         end_io = time.time()
         print("End reading")
@@ -160,17 +161,19 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
 
 def work():
     bw_record = fully_read(read_size, interval)
-    bw_predicted = noise_prediction_temp(bw_record, amp_low_threshold, freq_high_ratio)
+    bw_predicted = noise_prediction_temp(bw_record, amp_low_ratio, freq_high_ratio)
     print("bw predicted:", bw_predicted)
-    partial_read(read_size, interval, 100, 200, bw_predicted)
+    partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
 
 def main():
-    if sys.argv[1] == 'now':
+    read_size = int(sys.argv[1])
+    interval = int(sys.argv[2])
+    if sys.argv[3] == 'now':
         work()
     else:
         while True:
             now_time = datetime.now(timezone('UTC'))
-            if now_time.hour == int(sys.argv[1]) and now_time.minute == int(sys.argv[2]) and now_time.second == int(sys.argv[3]):
+            if now_time.hour == int(sys.argv[3]) and now_time.minute == int(sys.argv[4]) and now_time.second == int(sys.argv[5]):
                 work()
                 break
 
