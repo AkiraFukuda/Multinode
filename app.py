@@ -183,6 +183,20 @@ def make_plot(interval, bw1, bw_pred, bw_new, aug, col):
     ax1.legend()
     plt.savefig('log/app1.png')
 
+def make_log(bw1, bw_pred, bw_new, aug, col): 
+    f = open("log/app1_r.log", 'w+')
+    s = '[' + ','.join(str(i) for i in bw1) + ']'
+    f.write(s)
+    s = '[' + ','.join(str(i) for i in bw_pred) + ']'
+    f.write(s)
+    s = '[' + ','.join(str(i) for i in bw_new) + ']'
+    f.write(s)
+    s = '[' + ','.join(str(i) for i in aug) + ']'
+    f.write(s)
+    s = '[' + ','.join(str(i) for i in col) + ']'
+    f.write(s)
+    f.close()
+
 def work(read_size, interval):
     bw_record = fully_read(read_size, interval)
     print("bw:", bw_record)
@@ -192,7 +206,9 @@ def work(read_size, interval):
     print("bw new:", bw_new)
     print("augment:", aug_record)
     print("collision:", col_record)
-    make_plot(interval, bw_record, bw_predicted, bw_new, aug_record, col_record)
+    
+    # make_plot(interval, bw_record, bw_predicted, bw_new, aug_record, col_record)
+    make_log(bw_record, bw_predicted, bw_new, aug_record, col_record)
 
 def main():
     read_size = int(sys.argv[1])
