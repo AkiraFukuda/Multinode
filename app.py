@@ -130,7 +130,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
         if last_performance < 0.5:
             collision_times += 1
             print("Collision detected!")
-            random_factor = np.power(0.5, np.random.randint(collision_times))
+            random_factor = np.power(0.5, np.random.randint(collision_times+1))
             aug_ratio *= random_factor
             col_record.append(random_factor)
         else:
