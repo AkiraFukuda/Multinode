@@ -27,8 +27,10 @@ def noise_prediction():
 
 def noise_prediction_temp(samples, amp_low_ratio, freq_high_ratio):
     N = len(samples)
+    mean = np.mean(samples)
+    y_new = np.array(samples) - mean
     xf = fft.fftfreq(N, 1/N)
-    yf = fft.fft(samples)
+    yf = fft.fft(y_new)
     amp = np.abs(yf)
     amp_low_threshold = np.max(amp) * amp_low_ratio
     freq_high_threshold = np.max(xf) * freq_high_ratio
@@ -41,6 +43,7 @@ def noise_prediction_temp(samples, amp_low_ratio, freq_high_ratio):
             yf_filtered.append(0)
 
     new_sig = fft.ifft(yf_filtered)
+    new_sig = new_sig + mean
     return list(np.abs(new_sig))
 
 def bw_write(start, bw, window_length):
