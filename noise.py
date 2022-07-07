@@ -8,12 +8,12 @@ import pandas as pd
 import scipy.fft as fft
 
 app_tag = "Noise1"
-exp_time = 900
+exp_time = 1000
 filename = "hdd/noise1_1024.bin"
 
 def fully_read(size, interval):
     bandwidth = []
-    for i in range(exp_time / interval):
+    for i in range(int(exp_time/interval)):
         print("%s s"%(i*interval))
 
         print("Start reading")
@@ -39,7 +39,7 @@ def fully_read(size, interval):
     
     return bandwidth
 
-def work():
+def work(read_size, interval):
     bw_record = fully_read(read_size, interval)
     print(bw_record)
 
@@ -47,12 +47,12 @@ def main():
     read_size = int(sys.argv[1])
     interval = int(sys.argv[2])
     if sys.argv[3] == 'now':
-        work()
+        work(read_size, interval)
     else:
         while True:
             now_time = datetime.now(timezone('UTC'))
             if now_time.hour == int(sys.argv[3]) and now_time.minute == int(sys.argv[4]) and now_time.second == int(sys.argv[5]):
-                work()
+                work(read_size, interval)
                 break
 
 
