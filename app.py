@@ -8,16 +8,16 @@ import pandas as pd
 import scipy.fft as fft
 
 app_tag = "App1"
-read_size = 1024
+read_size = 512
 interval = 15
 read_times = 20
 filename = "hdd/noise1_1024.bin"
 
 record_fn0 = "hdd/bw_record_0.csv"
 record_fn1 = "hdd/bw_record_1.csv"
-window_length = 86400
+window_length = 3600
 amp_low_threshold = 1e-10
-freq_high_ratio = 0.5
+freq_high_ratio = 0.6
 
 def noise_prediction():
     df0 = pd.read_csv(record_fn0, header=None, names=['origin', 'date', 'time', 'bw'])
@@ -58,7 +58,7 @@ def bw_write(start, bw, window_length):
     if os.path.getsize(record_fn0) != 0:
         f_firstline = f.readline().split(',')
         f_date = int(f_firstline[1])
-        if now_date - f_date >= 2:
+        if now_date - f_date >= 2 or now_date < f_date:
             f.truncate(0)
     f.close()
 
@@ -66,7 +66,7 @@ def bw_write(start, bw, window_length):
     if os.path.getsize(record_fn1) != 0:
         f_firstline = f.readline().split(',')
         f_date = int(f_firstline[1])
-        if now_date - f_date >= 2:
+        if now_date - f_date >= 2 or now_date < f_date:
             f.truncate(0)
     f.close()
 
@@ -113,7 +113,7 @@ def fully_read(size, interval):
 def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
     bandwidth = []
     aug_record = []
-    collision_threshold = 0.5
+    collision_times = 0
     last_performance = 1
     for i in range(read_times):
         print("%s s"%(i*interval))
@@ -125,14 +125,17 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
             aug_ratio = 1.0
         else:
             aug_ratio = (bw_predicted - bw_low_bound) / (bw_high_bound - bw_low_bound)
-            random_factor = np.random.rand()
-            if last_performance < collision_threshold and random_factor < 0.5:
-                aug_ratio /= 2
+            if last_performance < 0.5:
+                collision_times += 1
+                random_factor = np.random.randint(collision_times)
+                aug_ratio *= np.power(0.5, random_factor)
+            else:
+                collision_times = 0
 
         print("Start reading, Augmentation = {:.0%}".format(aug_ratio))
         start = time.time()
         f = open(filename, "rb")
-        f.read(int(size*1024*1024*aug_ratio))
+        f.read(int(size*aug_ratio*1024*1024))
         f.close()
         end_io = time.time()
         print("End reading")
