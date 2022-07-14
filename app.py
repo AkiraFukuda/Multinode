@@ -42,6 +42,9 @@ def bw_read(window_length):
     df = df.reset_index()
     sample_x = df['time'].to_numpy()
     sample_y = df['bw'].to_numpy()
+
+
+
     return sample_x, sample_y
 
 def noise_prediction(amp_low_ratio, freq_high_ratio):
@@ -233,7 +236,7 @@ def make_plot(interval, bw1, bw_pred, bw_new, aug, col):
     plt.savefig('log/app1.png')
 
 def make_log(bw1, bw_pred, bw_new, aug, col): 
-    f = open("log/app1_r.log", 'w+')
+    f = open(log_path, 'w+')
     s = '[' + ','.join(str(i) for i in bw1) + ']'
     f.write(s)
     s = '[' + ','.join(str(i) for i in bw_pred) + ']'
