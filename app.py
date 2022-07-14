@@ -309,15 +309,15 @@ def make_plot(interval, bw1, bw_pred, bw_new, aug, col):
 
 def make_log(bw1, bw_pred, bw_new, aug, col): 
     f = open(log_path, 'w+')
-    s = '[' + ','.join(str(i) for i in bw1) + ']'
+    s = '[' + ','.join(str(i) for i in bw1) + ']\n'
     f.write(s)
-    s = '[' + ','.join(str(i) for i in bw_pred) + ']'
+    s = '[' + ','.join(str(i) for i in bw_pred) + ']\n'
     f.write(s)
-    s = '[' + ','.join(str(i) for i in bw_new) + ']'
+    s = '[' + ','.join(str(i) for i in bw_new) + ']\n'
     f.write(s)
-    s = '[' + ','.join(str(i) for i in aug) + ']'
+    s = '[' + ','.join(str(i) for i in aug) + ']\n'
     f.write(s)
-    s = '[' + ','.join(str(i) for i in col) + ']'
+    s = '[' + ','.join(str(i) for i in col) + ']\n'
     f.write(s)
     f.close()
 
