@@ -11,7 +11,8 @@ import cmath
 
 app_tag = "App1"
 exp_time = 540
-window_length = 86400
+window_length = 3600
+window_interval = 10
 amp_low_ratio = 0.25
 freq_high_ratio = 1
 bw_low_bound = 100
@@ -40,7 +41,7 @@ def bw_read(window_length):
 def noise_prediction(amp_low_ratio, freq_high_ratio):
     x, y = bw_read(window_length)
     sample_N = len(x)
-    N = x[sample_N-1] - x[0]
+    N = (x[sample_N-1] - x[0]) / window_interval
     mean = np.mean(y)
     y_new = np.array(y) - mean
     xf = fft.fftfreq(N, 1/N)
