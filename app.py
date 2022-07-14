@@ -176,7 +176,7 @@ def fully_read(size, interval):
     
     return bandwidth
 
-def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
+def partial_read_temp(size, interval, bw_low_bound, bw_high_bound, predict_result):
     bandwidth = []
     aug_record = []
     col_record = []
@@ -184,7 +184,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
     last_performance = 1
     for i in range(int(exp_time/interval)):
         print("%s s" % (i*interval))
-        bw_predicted = predict_result[i*(interval/window_interval)]
+        bw_predicted = predict_result[int(i*(interval/window_interval))]
         if bw_predicted < bw_low_bound:
             aug_ratio = 0.0
         elif bw_predicted > bw_high_bound:
@@ -216,6 +216,64 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
         bandwidth.append(bw)
         aug_record.append(aug_ratio)
         last_performance = bw / bw_predicted
+        bw_write(start, bw, window_length, window_interval)
+        print("Time = %.2f s, Bandwidth = %.2f MB/s" % (ana_time, bw))
+        if ana_time > interval:
+            print("Analysis time is larger than the interval!")
+        time.sleep(interval - ana_time)
+    
+    return bandwidth, aug_record, col_record
+
+def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result, pre_read_ratio):
+    bandwidth = []
+    aug_record = []
+    col_record = []
+    collision_times = 0
+
+    for i in range(int(exp_time/interval)):
+        print("%s s" % (i*interval))
+        bw_predicted = predict_result[i*(interval/window_interval)]
+        if bw_predicted < bw_low_bound:
+            aug_ratio = 0.0
+        elif bw_predicted > bw_high_bound:
+            aug_ratio = 1.0
+        else:
+            aug_ratio = (bw_predicted - bw_low_bound) / (bw_high_bound - bw_low_bound)
+        print("Augmentation = {:.0%}".format(aug_ratio))
+        pre_size = size*aug_ratio*pre_read_ratio
+        after_size = size*aug_ratio - pre_size
+
+        start = time.time()
+        f = open(filename, "rb")
+        f.read(int(pre_size*1024*1024))
+        f.close()
+        end_io = time.time()
+        pre_io_time = end_io - start
+        bw_pre = pre_size / pre_io_time
+
+        if bw_pre < bw_predicted * 0.75:
+            collision_times += 1
+            print("Collision detected!")
+            random_factor = np.power(0.5, np.random.randint(collision_times+1))
+            after_size *= random_factor
+            col_record.append(random_factor)
+        else:
+            collision_times = 0
+            col_record.append(-1)
+        
+        start = time.time()
+        f = open(filename, "rb")
+        f.read(int(after_size*1024*1024))
+        f.close()
+        end_io = time.time()
+        after_io_time = end_io - start
+        bw_after = after_size / after_io_time
+        end_ana = time.time()
+        ana_time = end_ana - start
+        
+        bw = (pre_size + after_size) / (pre_io_time + after_io_time)
+        bandwidth.append(bw)
+        aug_record.append(aug_ratio)
         bw_write(start, bw, window_length, window_interval)
         print("Time = %.2f s, Bandwidth = %.2f MB/s" % (ana_time, bw))
         if ana_time > interval:
@@ -264,17 +322,17 @@ def make_log(bw1, bw_pred, bw_new, aug, col):
     f.close()
 
 def work(read_size, interval):
-    # bw_record = fully_read(read_size, interval)
-    # print("bw:", bw_record)
+    bw_record = fully_read(read_size, interval)
+    print("bw:", bw_record)
     bw_predicted = noise_prediction(amp_low_ratio, freq_high_ratio)
     print("bw predicted:", bw_predicted)
-    # bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
-    # print("bw new:", bw_new)
-    # print("augment:", aug_record)
-    # print("collision:", col_record)
+    bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted, pre_read_ratio)
+    print("bw new:", bw_new)
+    print("augment:", aug_record)
+    print("collision:", col_record)
     
     # make_plot(interval, bw_record, bw_predicted, bw_new, aug_record, col_record)
-    # make_log(bw_record, bw_predicted, bw_new, aug_record, col_record)
+    make_log(bw_record, bw_predicted, bw_new, aug_record, col_record)
 
 def main():
     read_size = int(sys.argv[1])
