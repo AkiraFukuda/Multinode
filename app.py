@@ -23,6 +23,8 @@ filename = "hdd/app1_1024.bin"
 record_fn0 = "hdd/bw_record_0.csv"
 record_fn1 = "hdd/bw_record_1.csv"
 
+log_path = "log/app1_r.log"
+
 def bw_read(window_length):
     df0 = pd.read_csv(record_fn0, header=None, names=['origin', 'date', 'time', 'bw'])
     df1 = pd.read_csv(record_fn1, header=None, names=['origin', 'date', 'time', 'bw'])
@@ -93,10 +95,11 @@ def noise_prediction_temp(samples, amp_low_ratio, freq_high_ratio):
     new_sig = new_sig + mean
     return list(np.abs(new_sig))
 
-def bw_write(start, bw, window_length):
+def bw_write(start, bw, window_length, window_interval):
 
     now_date = int(round(start) / window_length)
     start_time_int = round(start) % window_length
+    start_time_int -= start_time_int % window_interval
 
     # Pandas method
     # df = pd.read_csv(record_fn)
@@ -148,7 +151,7 @@ def fully_read(size, interval):
         ana_time = end_ana - start
         bw = size / io_time
         bandwidth.append(bw)
-        bw_write(start, bw, window_length)
+        bw_write(start, bw, window_length, window_interval)
         print("Time = %.2f s, Bandwidth = %.2f MB/s" % (ana_time, bw))
         if ana_time > interval:
             print("Analysis time is larger than the interval!")
@@ -196,7 +199,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
         bandwidth.append(bw)
         aug_record.append(aug_ratio)
         last_performance = bw / bw_predicted
-        bw_write(start, bw, window_length)
+        bw_write(start, bw, window_length, window_interval)
         print("Time = %.2f s, Bandwidth = %.2f MB/s" % (ana_time, bw))
         if ana_time > interval:
             print("Analysis time is larger than the interval!")
