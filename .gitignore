@@ -1,5 +1,6 @@
 hdd/
 hdd
 log/
+t_*.py
 test_*.py
 run.sh
