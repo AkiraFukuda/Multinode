@@ -7,24 +7,65 @@ import numpy as np
 import pandas as pd
 import scipy.fft as fft
 import matplotlib.pyplot as plt
+import cmath
 
 app_tag = "App1"
 exp_time = 540
-window_length = 3600
+window_length = 86400
 amp_low_ratio = 0.25
 freq_high_ratio = 1
 bw_low_bound = 100
 bw_high_bound = 200
+pre_read_ratio = 0.1
 
 filename = "hdd/app1_1024.bin"
 record_fn0 = "hdd/bw_record_0.csv"
 record_fn1 = "hdd/bw_record_1.csv"
 
-def noise_prediction():
+def bw_read(window_length):
     df0 = pd.read_csv(record_fn0, header=None, names=['origin', 'date', 'time', 'bw'])
     df1 = pd.read_csv(record_fn1, header=None, names=['origin', 'date', 'time', 'bw'])
-    print(df0.to_dict())
-    print(df1.to_dict())
+    if df0['date'][0] < df1['date'][0]:
+        df1['time'] += window_length
+        df = pd.concat([df0, df1], ignore_index=True)
+    else:
+        df0['time'] += window_length
+        df = pd.concat([df1, df0], ignore_index=True)
+    df = df.groupby(by='time').mean() # Merging data at the same sample time
+    df = df.reset_index()
+    sample_x = df['time'].to_numpy()
+    sample_y = df['bw'].to_numpy()
+    return sample_x, sample_y
+
+def noise_prediction(amp_low_ratio, freq_high_ratio):
+    x, y = bw_read(window_length)
+    sample_N = len(x)
+    N = x[sample_N-1] - x[0]
+    mean = np.mean(y)
+    y_new = np.array(y) - mean
+    xf = fft.fftfreq(N, 1/N)
+    yf = []
+    for m in xf:
+        tmp = 0+0j
+        for i in range(sample_N):
+            tmp += y_new[i] * cmath.exp(-2*cmath.pi*1j * m * x[i] / N)
+        # tmp = tmp / cmath.sqrt(N)
+    yf.append(tmp)
+
+    amp = np.abs(yf)
+    amp_low_threshold = np.max(amp) * amp_low_ratio
+    freq_high_threshold = np.max(xf) * freq_high_ratio
+
+    yf_filtered = []
+    for i in range(len(yf)):
+        if amp[i] > amp_low_threshold and np.abs(xf[i]) < freq_high_threshold:
+            yf_filtered.append(yf[i])
+        else:
+            yf_filtered.append(0)
+
+    new_sig = fft.ifft(yf_filtered)
+    new_sig = new_sig + mean
+    return list(np.abs(new_sig))
 
 def noise_prediction_temp(samples, amp_low_ratio, freq_high_ratio):
     N = len(samples)
@@ -198,17 +239,17 @@ def make_log(bw1, bw_pred, bw_new, aug, col):
     f.close()
 
 def work(read_size, interval):
-    bw_record = fully_read(read_size, interval)
-    print("bw:", bw_record)
-    bw_predicted = noise_prediction_temp(bw_record, amp_low_ratio, freq_high_ratio)
+    # bw_record = fully_read(read_size, interval)
+    # print("bw:", bw_record)
+    bw_predicted = noise_prediction(amp_low_ratio, freq_high_ratio)
     print("bw predicted:", bw_predicted)
-    bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
-    print("bw new:", bw_new)
-    print("augment:", aug_record)
-    print("collision:", col_record)
+    # bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
+    # print("bw new:", bw_new)
+    # print("augment:", aug_record)
+    # print("collision:", col_record)
     
     # make_plot(interval, bw_record, bw_predicted, bw_new, aug_record, col_record)
-    make_log(bw_record, bw_predicted, bw_new, aug_record, col_record)
+    # make_log(bw_record, bw_predicted, bw_new, aug_record, col_record)
 
 def main():
     read_size = int(sys.argv[1])
