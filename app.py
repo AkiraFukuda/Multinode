@@ -240,17 +240,17 @@ def make_log(bw1, bw_pred, bw_new, aug, col):
     f.close()
 
 def work(read_size, interval):
-    # bw_record = fully_read(read_size, interval)
-    # print("bw:", bw_record)
+    bw_record = fully_read(read_size, interval)
+    print("bw:", bw_record)
     bw_predicted = noise_prediction(amp_low_ratio, freq_high_ratio)
     print("bw predicted:", bw_predicted)
-    # bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
-    # print("bw new:", bw_new)
-    # print("augment:", aug_record)
-    # print("collision:", col_record)
+    bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
+    print("bw new:", bw_new)
+    print("augment:", aug_record)
+    print("collision:", col_record)
     
     # make_plot(interval, bw_record, bw_predicted, bw_new, aug_record, col_record)
-    # make_log(bw_record, bw_predicted, bw_new, aug_record, col_record)
+    make_log(bw_record, bw_predicted, bw_new, aug_record, col_record)
 
 def main():
     read_size = int(sys.argv[1])
