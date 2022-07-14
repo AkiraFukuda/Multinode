@@ -232,7 +232,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result, pr
 
     for i in range(int(exp_time/interval)):
         print("%s s" % (i*interval))
-        bw_predicted = predict_result[i*(interval/window_interval)]
+        bw_predicted = predict_result[int(i*(interval/window_interval))]
         if bw_predicted < bw_low_bound:
             aug_ratio = 0.0
         elif bw_predicted > bw_high_bound:
