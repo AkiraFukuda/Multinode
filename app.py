@@ -28,39 +28,53 @@ log_path = "log/app1_r.log"
 def bw_read(window_length):
     df0 = pd.read_csv(record_fn0, header=None, names=['origin', 'date', 'time', 'bw'])
     df1 = pd.read_csv(record_fn1, header=None, names=['origin', 'date', 'time', 'bw'])
-    if df0.empty() == True:
+    if df0.empty:
         df = df1
-    elif df1.empty() == True:
+    elif df1.empty:
         df = df0
-    if df0['date'][0] < df1['date'][0]:
+    elif df0['date'][0] < df1['date'][0]:
         df1['time'] += window_length
         df = pd.concat([df0, df1], ignore_index=True)
     else:
         df0['time'] += window_length
         df = pd.concat([df1, df0], ignore_index=True)
-    df = df.groupby(by='time').mean() # Merging data at the same sample time
+    df = df.groupby(by='time').mean() # Merge data at the same sample time
     df = df.reset_index()
-    sample_x = df['time'].to_numpy()
-    sample_y = df['bw'].to_numpy()
+    x = df['time'].to_numpy()
+    y = df['bw'].to_numpy()
 
+    # Fill the vacant number with dots on the line
+    x_new = []
+    y_new = []
+    N = len(x)
+    for i in range(N-1):
+        x_new.append(x[i])
+        y_new.append(y[i])
+        k = round((x[i+1] - x[i]) / window_interval)
+        for ii in range(k-1):
+            x_new.append(x[i] + window_interval * (ii+1))
+            y_temp = y[i] + (y[i+1]-y[i]) / k * (ii+1)
+            y_new.append(y_temp)
+    x_new.append(x[N-1])
+    y_new.append(y[N-1])
 
-
-    return sample_x, sample_y
+    return x_new, y_new
 
 def noise_prediction(amp_low_ratio, freq_high_ratio):
     x, y = bw_read(window_length)
     sample_N = len(x)
-    N = (x[sample_N-1] - x[0]) / window_interval
+    N = sample_N
     mean = np.mean(y)
     y_new = np.array(y) - mean
     xf = fft.fftfreq(N, 1/N)
-    yf = []
-    for m in xf:
-        tmp = 0+0j
-        for i in range(sample_N):
-            tmp += y_new[i] * cmath.exp(-2*cmath.pi*1j * m * x[i] / N)
-        # tmp = tmp / cmath.sqrt(N)
-    yf.append(tmp)
+    yf = fft.fft(y_new)
+    # yf = []
+    # for m in xf:
+    #     tmp = 0+0j
+    #     for i in range(sample_N):
+    #         tmp += y_new[i] * cmath.exp(-2*cmath.pi*1j * m * x[i] / N)
+    #     # tmp = tmp / cmath.sqrt(N)
+    # yf.append(tmp)
 
     amp = np.abs(yf)
     amp_low_threshold = np.max(amp) * amp_low_ratio
@@ -170,7 +184,7 @@ def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
     last_performance = 1
     for i in range(int(exp_time/interval)):
         print("%s s" % (i*interval))
-        bw_predicted = predict_result[i]
+        bw_predicted = predict_result[i*(interval/window_interval)]
         if bw_predicted < bw_low_bound:
             aug_ratio = 0.0
         elif bw_predicted > bw_high_bound:
@@ -250,17 +264,17 @@ def make_log(bw1, bw_pred, bw_new, aug, col):
     f.close()
 
 def work(read_size, interval):
-    bw_record = fully_read(read_size, interval)
-    print("bw:", bw_record)
+    # bw_record = fully_read(read_size, interval)
+    # print("bw:", bw_record)
     bw_predicted = noise_prediction(amp_low_ratio, freq_high_ratio)
     print("bw predicted:", bw_predicted)
-    bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
-    print("bw new:", bw_new)
-    print("augment:", aug_record)
-    print("collision:", col_record)
+    # bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
+    # print("bw new:", bw_new)
+    # print("augment:", aug_record)
+    # print("collision:", col_record)
     
     # make_plot(interval, bw_record, bw_predicted, bw_new, aug_record, col_record)
-    make_log(bw_record, bw_predicted, bw_new, aug_record, col_record)
+    # make_log(bw_record, bw_predicted, bw_new, aug_record, col_record)
 
 def main():
     read_size = int(sys.argv[1])
