@@ -28,9 +28,9 @@ log_path = "log/app1_r.log"
 def bw_read(window_length):
     df0 = pd.read_csv(record_fn0, header=None, names=['origin', 'date', 'time', 'bw'])
     df1 = pd.read_csv(record_fn1, header=None, names=['origin', 'date', 'time', 'bw'])
-    if df0.empty():
+    if df0.empty() == True:
         df = df1
-    elif df1.empty():
+    elif df1.empty() == True:
         df = df0
     if df0['date'][0] < df1['date'][0]:
         df1['time'] += window_length
