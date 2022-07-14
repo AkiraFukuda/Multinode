@@ -176,7 +176,7 @@ def fully_read(size, interval):
     
     return bandwidth
 
-def partial_read_temp(size, interval, bw_low_bound, bw_high_bound, predict_result):
+def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result):
     bandwidth = []
     aug_record = []
     col_record = []
@@ -224,7 +224,7 @@ def partial_read_temp(size, interval, bw_low_bound, bw_high_bound, predict_resul
     
     return bandwidth, aug_record, col_record
 
-def partial_read(size, interval, bw_low_bound, bw_high_bound, predict_result, pre_read_ratio):
+def partial_read_new(size, interval, bw_low_bound, bw_high_bound, predict_result, pre_read_ratio):
     bandwidth = []
     aug_record = []
     col_record = []
@@ -326,7 +326,7 @@ def work(read_size, interval):
     print("bw:", bw_record)
     bw_predicted = noise_prediction(amp_low_ratio, freq_high_ratio)
     print("bw predicted:", bw_predicted)
-    bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted, pre_read_ratio)
+    bw_new, aug_record, col_record = partial_read(read_size, interval, bw_low_bound, bw_high_bound, bw_predicted)
     print("bw new:", bw_new)
     print("augment:", aug_record)
     print("collision:", col_record)
