@@ -34,7 +34,7 @@ def partial_read_new(size, interval, bw_low_bound, bw_high_bound, pre_read_ratio
     # collision_times = 0
 
     for i in range(int(exp_time/interval)):
-        print("%s s" % (i*interval))
+        print("\n%s s" % (i*interval))
         pre_size = size * pre_read_ratio
         start = time.time()
         f = open(filename, "rb")
@@ -43,7 +43,7 @@ def partial_read_new(size, interval, bw_low_bound, bw_high_bound, pre_read_ratio
         end_io = time.time()
         pre_io_time = end_io - start
         bw_pre = pre_size / pre_io_time
-        print("Time = %.2f s, BW1 = %.2f MB/s" % (pre_io_time, bw_pre))
+        print("T1 = %.2f s, BW1 = %.2f MB/s" % (pre_io_time, bw_pre))
         bw1_record.append(bw_pre)
 
         if bw_pre < bw_low_bound:
@@ -52,8 +52,9 @@ def partial_read_new(size, interval, bw_low_bound, bw_high_bound, pre_read_ratio
             aug_ratio = 1.0
         else:
             aug_ratio = (bw_pre - bw_low_bound) / (bw_high_bound - bw_low_bound)
-        print("Augmentation = {:.0%}".format(aug_ratio))
         after_size = (size - pre_size) * aug_ratio
+        # print("Aug = {:.0%}".format(aug_ratio))
+        print("Size = %.2f MB" % after_size)
 
         # if bw_pre < bw_predicted * 0.75:
         #     collision_times += 1
@@ -74,7 +75,7 @@ def partial_read_new(size, interval, bw_low_bound, bw_high_bound, pre_read_ratio
         bw_after = after_size / after_io_time
         end_ana = time.time()
         ana_time = end_ana - start
-        print("Time = %.2f s, BW2 = %.2f MB/s" % (after_io_time, bw_after))
+        print("T2 = %.2f s, BW2 = %.2f MB/s" % (after_io_time, bw_after))
         bw2_record.append(bw_after)
         
         bw = (pre_size + after_size) / (pre_io_time + after_io_time)
